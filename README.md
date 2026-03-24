@@ -269,31 +269,21 @@ Fields can appear in any order. The secret codeword can appear anywhere in the b
 
 ### Setup
 
+> **Important:** deploying the fwd Worker does *not* automatically enable email. You must create the routing rule in the Cloudflare dashboard separately. The Worker will silently ignore all email until both the routing rule and per-user config are in place.
+
 **1. Enable Cloudflare Email Routing** on your domain (or a subdomain — see note below).
 
 **2. Create a routing rule** in the Cloudflare dashboard:
-- Email address: whatever you want (e.g. `add@yourdomain.com`)
-- Action: send to Worker → select your `fwd` Worker
+- Go to your domain → **Email → Email Routing → Routing rules**
+- Add a rule: email address of your choice (e.g. `go@yourdomain.com`) → Action: **Send to Worker** → select your `fwd` Worker
 
-**3. Add config to `wrangler.toml`:**
+**3. Configure per-user email auth in the fwd dashboard:**
+- Log in at `/_/`
+- Under **Users**, expand **Edit email auth** for your user
+- Set **Authorized senders**: comma-separated list of email addresses allowed to create redirects
+- Set **Email secret**: a codeword (min 8 chars) that must appear in the email body
 
-```toml
-[vars]
-ALLOWED_SENDERS = "you@gmail.com,colleague@gmail.com"
-```
-
-**4. Add the secret as a Worker secret** (not a var — keeps it out of your config file):
-
-```bash
-yarn wrangler secret put EMAIL_SECRET
-# enter your codeword when prompted
-```
-
-**5. Deploy:**
-
-```bash
-yarn deploy
-```
+No redeploy needed — these settings are stored in D1 and take effect immediately.
 
 ### Note: using a subdomain if your domain MX points elsewhere
 
