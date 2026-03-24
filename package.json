@@ -15,5 +15,8 @@
     "typescript": "^5.5.4",
     "wrangler": "4"
   },
-  "packageManager": "yarn@4.9.1"
+  "packageManager": "yarn@4.9.1",
+  "dependencies": {
+    "postal-mime": "^2.7.4"
+  }
 }

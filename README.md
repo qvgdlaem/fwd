@@ -248,6 +248,70 @@ Slugs must be alphanumeric (hyphens and underscores allowed). They cannot start 
 
 ---
 
+## Optional: add redirects by email
+
+If your domain uses Cloudflare Email Routing, you can add new redirects by sending an email — no dashboard needed.
+
+### How it works
+
+Send an email from a whitelisted address to any address you've routed to the fwd Worker:
+
+```
+To: add@yourdomain.com
+From: you@youremail.com
+
+slug=spring-contest
+url=https://yoursite.com/landing-page
+secret=yourcodeword
+```
+
+Fields can appear in any order. The secret codeword can appear anywhere in the body. If the sender is not whitelisted or the codeword is missing, the email is silently ignored.
+
+### Setup
+
+**1. Enable Cloudflare Email Routing** on your domain (or a subdomain — see note below).
+
+**2. Create a routing rule** in the Cloudflare dashboard:
+- Email address: whatever you want (e.g. `add@yourdomain.com`)
+- Action: send to Worker → select your `fwd` Worker
+
+**3. Add config to `wrangler.toml`:**
+
+```toml
+[vars]
+ALLOWED_SENDERS = "you@gmail.com,colleague@gmail.com"
+```
+
+**4. Add the secret as a Worker secret** (not a var — keeps it out of your config file):
+
+```bash
+yarn wrangler secret put EMAIL_SECRET
+# enter your codeword when prompted
+```
+
+**5. Deploy:**
+
+```bash
+yarn deploy
+```
+
+### Note: using a subdomain if your domain MX points elsewhere
+
+If your domain's MX records point to Google Workspace, Outlook, etc., you can still use this feature by setting up Email Routing on a **subdomain** (e.g. `fwd.yourdomain.com`). Subdomain MX records are independent from your root domain's mail setup.
+
+The email address would then be something like `add@fwd.yourdomain.com`.
+
+### Semantic tip
+
+Since fwd supports multiple namespaces (`/go`, `/win`, etc.), you can match your email address to your namespace for a coherent feel:
+
+- `go@yourdomain.com` → adds a general-purpose redirect
+- `win@yourdomain.com` → adds a contest/campaign redirect
+
+Both write to the same fwd instance. The email address is purely cosmetic.
+
+---
+
 ## Security
 
 ### Rate limiting

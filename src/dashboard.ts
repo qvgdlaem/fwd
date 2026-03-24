@@ -3,9 +3,15 @@ import {
   deleteRedirect,
   listRedirects,
   purgeExpiredSessions,
+  listUsers,
+  createUser,
+  deleteUser,
+  updateUserPassword,
+  updateUserEmailAuth,
 } from "./db";
 import {
   clearSessionCookie,
+  hashPassword,
   login,
   logout,
   requireAuth,
@@ -76,29 +82,29 @@ export async function handleDashboard(db: D1Database, rateLimiter: RateLimit, re
     const label = String(form.get("label") ?? "").trim() || null;
 
     if (!slug || !redirectUrl) {
-      const redirects = await listRedirects(db);
-      return renderDashboard(redirects, session.username, "Slug and URL are required.");
+      const [redirects, users] = await Promise.all([listRedirects(db), listUsers(db)]);
+      return renderDashboard(redirects, users, session.username, "Slug and URL are required.");
     }
 
     // Basic URL validation
     try {
       new URL(redirectUrl);
     } catch {
-      const redirects = await listRedirects(db);
-      return renderDashboard(redirects, session.username, "Invalid URL format.");
+      const [redirects, users] = await Promise.all([listRedirects(db), listUsers(db)]);
+      return renderDashboard(redirects, users, session.username, "Invalid URL format.");
     }
 
     // Disallow reserved namespace
     if (slug.startsWith("_")) {
-      const redirects = await listRedirects(db);
-      return renderDashboard(redirects, session.username, 'Slug cannot start with "_".');
+      const [redirects, users] = await Promise.all([listRedirects(db), listUsers(db)]);
+      return renderDashboard(redirects, users, session.username, 'Slug cannot start with "_".');
     }
 
     try {
       await addRedirect(db, slug, redirectUrl, label);
     } catch {
-      const redirects = await listRedirects(db);
-      return renderDashboard(redirects, session.username, `Slug "${slug}" already exists.`);
+      const [redirects, users] = await Promise.all([listRedirects(db), listUsers(db)]);
+      return renderDashboard(redirects, users, session.username, `Slug "${slug}" already exists.`);
     }
 
     return new Response(null, { status: 302, headers: { Location: "/_/" } });
@@ -112,11 +118,83 @@ export async function handleDashboard(db: D1Database, rateLimiter: RateLimit, re
     return new Response(null, { status: 302, headers: { Location: "/_/" } });
   }
 
+  // Add user
+  if (path === "/_/users/add" && request.method === "POST") {
+    const form = await request.formData();
+    const newUsername = String(form.get("username") ?? "").trim().toLowerCase();
+    const newPassword = String(form.get("password") ?? "");
+
+    if (!newUsername || !newPassword) {
+      const [redirects, users] = await Promise.all([listRedirects(db), listUsers(db)]);
+      return renderDashboard(redirects, users, session.username, "Username and password are required.");
+    }
+    if (newPassword.length < 8) {
+      const [redirects, users] = await Promise.all([listRedirects(db), listUsers(db)]);
+      return renderDashboard(redirects, users, session.username, "Password must be at least 8 characters.");
+    }
+
+    const hash = await hashPassword(newPassword);
+    try {
+      await createUser(db, newUsername, hash);
+    } catch {
+      const [redirects, users] = await Promise.all([listRedirects(db), listUsers(db)]);
+      return renderDashboard(redirects, users, session.username, `Username "${newUsername}" already exists.`);
+    }
+    return new Response(null, { status: 302, headers: { Location: "/_/" } });
+  }
+
+  // Delete user
+  if (path === "/_/users/delete" && request.method === "POST") {
+    const form = await request.formData();
+    const targetUsername = String(form.get("username") ?? "");
+
+    // Cannot delete yourself or the admin account
+    if (targetUsername === session.username || targetUsername === "admin") {
+      const [redirects, users] = await Promise.all([listRedirects(db), listUsers(db)]);
+      return renderDashboard(redirects, users, session.username, "Cannot delete this user.");
+    }
+
+    await deleteUser(db, targetUsername);
+    return new Response(null, { status: 302, headers: { Location: "/_/" } });
+  }
+
+  // Update user email auth (authorized_senders + email_secret)
+  if (path === "/_/users/update-auth" && request.method === "POST") {
+    const form = await request.formData();
+    const targetUsername = String(form.get("username") ?? "");
+    const authorizedSenders = String(form.get("authorized_senders") ?? "").trim();
+    const emailSecret = String(form.get("email_secret") ?? "").trim();
+
+    if (emailSecret && emailSecret.length < 8) {
+      const [redirects, users] = await Promise.all([listRedirects(db), listUsers(db)]);
+      return renderDashboard(redirects, users, session.username, "Email secret must be at least 8 characters.");
+    }
+
+    await updateUserEmailAuth(db, targetUsername, authorizedSenders, emailSecret);
+    return new Response(null, { status: 302, headers: { Location: "/_/" } });
+  }
+
+  // Update user password
+  if (path === "/_/users/update-password" && request.method === "POST") {
+    const form = await request.formData();
+    const targetUsername = String(form.get("username") ?? "");
+    const newPassword = String(form.get("password") ?? "");
+
+    if (!newPassword || newPassword.length < 8) {
+      const [redirects, users] = await Promise.all([listRedirects(db), listUsers(db)]);
+      return renderDashboard(redirects, users, session.username, "Password must be at least 8 characters.");
+    }
+
+    const hash = await hashPassword(newPassword);
+    await updateUserPassword(db, targetUsername, hash);
+    return new Response(null, { status: 302, headers: { Location: "/_/" } });
+  }
+
   // Dashboard index
   if (path === "/_" || path === "/_/") {
     await purgeExpiredSessions(db); // opportunistic cleanup
-    const redirects = await listRedirects(db);
-    return renderDashboard(redirects, session.username);
+    const [redirects, users] = await Promise.all([listRedirects(db), listUsers(db)]);
+    return renderDashboard(redirects, users, session.username);
   }
 
   return new Response("Not found", { status: 404 });
@@ -153,6 +231,7 @@ function renderLogin(error?: string): Response {
 
 function renderDashboard(
   redirects: import("./db").Redirect[],
+  users: Omit<import("./db").User, "password_hash">[],
   username: string,
   error?: string
 ): Response {
@@ -175,6 +254,55 @@ function renderDashboard(
         )
         .join("")
     : `<tr><td colspan="5" class="muted center">No redirects yet.</td></tr>`;
+
+  const userRows = users
+    .map((u) => {
+      const isProtected = u.username === "admin" || u.username === username;
+      return `
+    <tr>
+      <td><code>${escapeHtml(u.username)}</code>${u.username === username ? ' <span class="badge">you</span>' : ""}</td>
+      <td>
+        <details>
+          <summary class="edit-link">Edit email auth</summary>
+          <form method="POST" action="/_/users/update-auth" class="inline-form">
+            <input type="hidden" name="username" value="${escapeHtml(u.username)}">
+            <div class="inline-field">
+              <label>Authorized senders <span class="muted">(comma-separated emails)</span></label>
+              <input type="text" name="authorized_senders" value="${escapeHtml(u.authorized_senders)}" placeholder="you@example.com,colleague@example.com">
+            </div>
+            <div class="inline-field">
+              <label>Email secret <span class="muted">(min 8 chars)</span></label>
+              <input type="text" name="email_secret" value="${escapeHtml(u.email_secret)}" placeholder="min 8 characters">
+            </div>
+            <button type="submit">Save</button>
+          </form>
+        </details>
+      </td>
+      <td>
+        <details>
+          <summary class="edit-link">Change password</summary>
+          <form method="POST" action="/_/users/update-password" class="inline-form">
+            <input type="hidden" name="username" value="${escapeHtml(u.username)}">
+            <div class="inline-field">
+              <label>New password <span class="muted">(min 8 chars)</span></label>
+              <input type="password" name="password" placeholder="new password" required minlength="8">
+            </div>
+            <button type="submit">Update</button>
+          </form>
+        </details>
+      </td>
+      <td>
+        ${isProtected
+          ? '<span class="muted">—</span>'
+          : `<form method="POST" action="/_/users/delete" onsubmit="return confirm('Delete user ${escapeHtml(u.username)}?')">
+              <input type="hidden" name="username" value="${escapeHtml(u.username)}">
+              <button type="submit" class="btn-delete">Delete</button>
+            </form>`
+        }
+      </td>
+    </tr>`;
+    })
+    .join("");
 
   const html = `<!DOCTYPE html>
 <html lang="en">
@@ -239,6 +367,43 @@ function renderDashboard(
         </table>
       </div>
     </section>
+
+    <section class="users-section">
+      <h2>Users <span class="count">${users.length}</span></h2>
+      <div class="table-wrap">
+        <table>
+          <thead>
+            <tr>
+              <th>Username</th>
+              <th>Email auth</th>
+              <th>Password</th>
+              <th></th>
+            </tr>
+          </thead>
+          <tbody>${userRows}</tbody>
+        </table>
+      </div>
+
+      <div class="add-user-form">
+        <h3>Add user</h3>
+        <form method="POST" action="/_/users/add">
+          <div class="form-row">
+            <div class="field">
+              <label for="new-username">Username</label>
+              <input id="new-username" name="username" type="text" placeholder="username" required pattern="[a-zA-Z0-9_-]+">
+            </div>
+            <div class="field">
+              <label for="new-password">Password <span class="muted">(min 8 chars)</span></label>
+              <input id="new-password" name="password" type="password" placeholder="password" required minlength="8">
+            </div>
+            <div class="field submit-field">
+              <label>&nbsp;</label>
+              <button type="submit">Add user</button>
+            </div>
+          </div>
+        </form>
+      </div>
+    </section>
   </div>
 </body>
 </html>`;
@@ -257,6 +422,7 @@ function styles(): string {
 
     h1 { font-size: 22px; font-weight: 700; letter-spacing: -0.5px; }
     h2 { font-size: 15px; font-weight: 600; margin-bottom: 12px; }
+    h3 { font-size: 13px; font-weight: 600; margin-bottom: 10px; color: #495057; }
     .subtitle { color: #6c757d; margin-top: 4px; margin-bottom: 28px; }
 
     header { display: flex; align-items: center; justify-content: space-between; margin-bottom: 28px; }
@@ -266,6 +432,7 @@ function styles(): string {
     .muted { color: #6c757d; font-size: 13px; }
     .center { text-align: center; }
     .count { font-weight: 400; color: #6c757d; }
+    .badge { font-size: 11px; background: #e9ecef; color: #6c757d; border-radius: 4px; padding: 1px 6px; vertical-align: middle; }
 
     label { display: block; font-size: 12px; font-weight: 500; color: #495057; margin-bottom: 4px; }
     input[type="text"], input[type="url"], input[type="password"] {
@@ -293,10 +460,22 @@ function styles(): string {
     .table-wrap { overflow-x: auto; }
     table { width: 100%; border-collapse: collapse; background: #fff; border: 1px solid #dee2e6; border-radius: 8px; overflow: hidden; }
     th { text-align: left; padding: 10px 14px; font-size: 12px; font-weight: 600; text-transform: uppercase; letter-spacing: 0.5px; color: #6c757d; background: #f8f9fa; border-bottom: 1px solid #dee2e6; }
-    td { padding: 10px 14px; border-bottom: 1px solid #f1f3f5; vertical-align: middle; }
+    td { padding: 10px 14px; border-bottom: 1px solid #f1f3f5; vertical-align: top; }
     tr:last-child td { border-bottom: none; }
     tr:hover td { background: #f8f9fa; }
     .url-cell { max-width: 320px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+
+    .users-section { margin-top: 36px; }
+    .add-user-form { margin-top: 16px; background: #fff; border: 1px solid #dee2e6; border-radius: 8px; padding: 16px 20px; }
+
+    details summary { cursor: pointer; font-size: 12px; color: #0d6efd; list-style: none; user-select: none; }
+    details summary::-webkit-details-marker { display: none; }
+    details summary::before { content: "+ "; }
+    details[open] summary::before { content: "− "; }
+    .inline-form { margin-top: 10px; display: flex; flex-direction: column; gap: 8px; padding: 12px; background: #f8f9fa; border-radius: 6px; border: 1px solid #e9ecef; }
+    .inline-form button[type="submit"] { align-self: flex-start; padding: 6px 14px; font-size: 13px; }
+    .inline-field { display: flex; flex-direction: column; gap: 4px; }
+    .inline-field input { max-width: 360px; }
 
     .container.narrow form { display: flex; flex-direction: column; gap: 14px; }
     .container.narrow button[type="submit"] { margin-top: 4px; }

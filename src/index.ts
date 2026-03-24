@@ -1,8 +1,13 @@
 import { handleDashboard } from "./dashboard";
 import { handleRedirect } from "./redirect";
+import { handleEmail } from "./email";
 import type { Env } from "./db";
 
 export default {
+  async email(message: ForwardableEmailMessage, env: Env): Promise<void> {
+    await handleEmail(message, env);
+  },
+
   async fetch(request: Request, env: Env): Promise<Response> {
     const url = new URL(request.url);
 

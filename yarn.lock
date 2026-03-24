@@ -1118,6 +1118,7 @@ __metadata:
   resolution: "fwd@workspace:."
   dependencies:
     "@cloudflare/workers-types": "npm:^4.20240725.0"
+    postal-mime: "npm:^2.7.4"
     tsx: "npm:^4.21.0"
     typescript: "npm:^5.5.4"
     wrangler: "npm:4"
@@ -1416,6 +1417,13 @@ __metadata:
   version: 4.0.4
   resolution: "picomatch@npm:4.0.4"
   checksum: 10c0/e2c6023372cc7b5764719a5ffb9da0f8e781212fa7ca4bd0562db929df8e117460f00dff3cb7509dacfc06b86de924b247f504d0ce1806a37fac4633081466b0
+  languageName: node
+  linkType: hard
+
+"postal-mime@npm:^2.7.4":
+  version: 2.7.4
+  resolution: "postal-mime@npm:2.7.4"
+  checksum: 10c0/836220ef876b8e3ae7236341a4fbff5b8bf6618952a1208966a4e3040c9f51c14572fa695b1863bd445e8d7894536d2eb4e5001f50795c3f7fbfe39c8946ba09
   languageName: node
   linkType: hard
 

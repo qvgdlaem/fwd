@@ -8,6 +8,8 @@ export interface Redirect {
 export interface User {
   username: string;
   password_hash: string;
+  authorized_senders: string; // comma-separated email addresses
+  email_secret: string;       // per-user codeword for email-to-redirect
   created_at: string;
 }
 
@@ -60,6 +62,13 @@ export async function getUser(db: D1Database, username: string): Promise<User | 
   return db.prepare("SELECT * FROM users WHERE username = ?").bind(username).first<User>();
 }
 
+export async function listUsers(db: D1Database): Promise<Omit<User, "password_hash">[]> {
+  const result = await db
+    .prepare("SELECT username, authorized_senders, email_secret, created_at FROM users ORDER BY created_at ASC")
+    .all<Omit<User, "password_hash">>();
+  return result.results;
+}
+
 export async function createUser(
   db: D1Database,
   username: string,
@@ -69,6 +78,44 @@ export async function createUser(
     .prepare("INSERT INTO users (username, password_hash) VALUES (?, ?)")
     .bind(username, passwordHash)
     .run();
+}
+
+export async function deleteUser(db: D1Database, username: string): Promise<void> {
+  await db.prepare("DELETE FROM users WHERE username = ?").bind(username).run();
+}
+
+export async function updateUserPassword(
+  db: D1Database,
+  username: string,
+  passwordHash: string
+): Promise<void> {
+  await db
+    .prepare("UPDATE users SET password_hash = ? WHERE username = ?")
+    .bind(passwordHash, username)
+    .run();
+}
+
+export async function updateUserEmailAuth(
+  db: D1Database,
+  username: string,
+  authorizedSenders: string,
+  emailSecret: string
+): Promise<void> {
+  await db
+    .prepare("UPDATE users SET authorized_senders = ?, email_secret = ? WHERE username = ?")
+    .bind(authorizedSenders, emailSecret, username)
+    .run();
+}
+
+export async function findUserByAuthorizedSender(
+  db: D1Database,
+  senderEmail: string
+): Promise<User | null> {
+  const users = await db.prepare("SELECT * FROM users WHERE authorized_senders != ''").all<User>();
+  const email = senderEmail.toLowerCase();
+  return users.results.find(u =>
+    u.authorized_senders.split(",").map(s => s.trim().toLowerCase()).includes(email)
+  ) ?? null;
 }
 
 // Sessions
