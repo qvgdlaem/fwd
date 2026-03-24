@@ -193,23 +193,33 @@ go.yourdomain.com/_/          →  Worker  →  dashboard
 
 ### Behind a reverse proxy (namespace routing)
 
-If you have an existing Cloudflare Worker acting as a reverse proxy, reserve a namespace (e.g. `/fwd/*`) and forward the full request — **without stripping the prefix**. `fwd` handles that itself via the `PREFIX` variable.
+If you have an existing Cloudflare Worker acting as a reverse proxy, reserve one or more path namespaces and forward the full request — **without stripping the prefix**. `fwd` handles that itself.
+
+The router's only job is forwarding. `fwd` is responsible for understanding which namespaces it owns.
 
 In your router Worker:
 ```ts
-if (url.pathname.startsWith("/fwd/")) {
+if (url.pathname.startsWith("/fwd/") || url.pathname.startsWith("/go/")) {
   return env.FWD.fetch(request); // full path forwarded as-is
 }
 ```
 
-In `fwd`'s `wrangler.toml`, set the matching prefix(es):
+In `fwd`'s `wrangler.toml`, list all namespaces the router sends to it:
 ```toml
 [vars]
-PREFIXES = "/fwd"          # single namespace
-# PREFIXES = "/fwd,/win,/go"  # or multiple, comma-separated
+PREFIXES = "/fwd,/go"
 ```
 
-`fwd` strips the matching prefix before resolving the slug. The dashboard is available at `/<prefix>/_/` (e.g. `/fwd/_/`).
+`fwd` matches the incoming path against each prefix, strips the matching one, and resolves the slug. The dashboard is available at `/<any-prefix>/_/`.
+
+#### Why multiple namespaces?
+
+A single `fwd` instance can serve URLs with different semantic meanings — same slug → URL lookup under the hood, but the namespace communicates intent to the person clicking. For example:
+
+- `/go/partner-page` — general-purpose short link (`/go` reads as "go to")
+- `/win/spring-contest` — campaign-specific namespace (`/win` signals a contest or giveaway)
+
+Both resolve through the same worker and dashboard. The namespace is purely cosmetic.
 
 ---
 
