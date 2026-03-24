@@ -11,9 +11,10 @@ import {
   requireAuth,
   sessionCookie,
 } from "./auth";
+import type { RateLimit } from "./db";
 import type { D1Database } from "@cloudflare/workers-types";
 
-export async function handleDashboard(db: D1Database, request: Request): Promise<Response> {
+export async function handleDashboard(db: D1Database, rateLimiter: RateLimit, request: Request): Promise<Response> {
   const url = new URL(request.url);
   const path = url.pathname.replace(/\/$/, ""); // strip trailing slash
 
@@ -24,6 +25,12 @@ export async function handleDashboard(db: D1Database, request: Request): Promise
 
   // Process login
   if (path === "/_/login" && request.method === "POST") {
+    const ip = request.headers.get("CF-Connecting-IP") ?? "unknown";
+    const { success: allowed } = await rateLimiter.limit({ key: ip });
+    if (!allowed) {
+      return renderLogin("Too many attempts. Please wait a minute and try again.");
+    }
+
     const form = await request.formData();
     const username = String(form.get("username") ?? "");
     const password = String(form.get("password") ?? "");

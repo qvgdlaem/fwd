@@ -17,8 +17,13 @@ export interface Session {
   expires_at: string;
 }
 
+export interface RateLimit {
+  limit(options: { key: string }): Promise<{ success: boolean }>;
+}
+
 export interface Env {
   FWD_DB: D1Database;
+  LOGIN_RATE_LIMITER: RateLimit;
 }
 
 // Redirects

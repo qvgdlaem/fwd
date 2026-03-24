@@ -231,6 +231,32 @@ Slugs must be alphanumeric (hyphens and underscores allowed). They cannot start 
 
 ---
 
+## Security
+
+### Rate limiting
+
+`fwd` uses Cloudflare's [Workers Rate Limiting](https://developers.cloudflare.com/workers/runtime-apis/bindings/rate-limit/) to block brute-force attacks on the login endpoint. This is configured in `wrangler.toml` and enforced in code — no Cloudflare dashboard setup needed.
+
+The default limit is **5 login attempts per minute per IP**. To change it, edit `wrangler.toml`:
+
+```toml
+[[unsafe.bindings]]
+type = "ratelimit"
+name = "LOGIN_RATE_LIMITER"
+namespace_id = "1001"
+simple = { limit = 5, period = 60 }  # ← adjust limit and period (seconds)
+```
+
+### Password hashing
+
+Passwords are hashed with PBKDF2 (100,000 iterations, SHA-256) using the Web Crypto API. No external dependencies.
+
+### Sessions
+
+Sessions are stored in D1, expire after 24 hours, and use HttpOnly + Secure + SameSite=Lax cookies.
+
+---
+
 ## Schema
 
 ```sql

@@ -9,7 +9,7 @@ export default {
 
     // Dashboard namespace: all /_/* routes
     if (path === "/_" || path.startsWith("/_/")) {
-      return handleDashboard(env.FWD_DB, request);
+      return handleDashboard(env.FWD_DB, env.LOGIN_RATE_LIMITER, request);
     }
 
     // Redirect: /:slug
