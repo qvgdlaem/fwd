@@ -5,7 +5,15 @@ import type { Env } from "./db";
 export default {
   async fetch(request: Request, env: Env): Promise<Response> {
     const url = new URL(request.url);
-    const path = url.pathname;
+
+    // Strip routing prefix if configured.
+    // PREFIXES is a comma-separated list, e.g. "/fwd,/win,/go".
+    // Leave empty for standalone subdomain deployments.
+    const prefixes = (env.PREFIXES ?? "").split(",").map(p => p.trim().replace(/\/+$/, "")).filter(Boolean);
+    const matchedPrefix = prefixes.find(p => url.pathname === p || url.pathname.startsWith(p + "/"));
+    const path = matchedPrefix
+      ? url.pathname.slice(matchedPrefix.length) || "/"
+      : url.pathname;
 
     // Dashboard namespace: all /_/* routes
     if (path === "/_" || path.startsWith("/_/")) {

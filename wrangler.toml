@@ -3,6 +3,12 @@ main = "src/index.ts"
 compatibility_date = "2024-09-23"
 compatibility_flags = ["nodejs_compat"]
 
+# Comma-separated list of path namespaces your reverse proxy routes to this worker.
+# e.g. PREFIXES = "/fwd,/win,/go"
+# Leave empty if deploying standalone on a subdomain (e.g. go.yourdomain.com).
+[vars]
+PREFIXES = ""
+
 [[d1_databases]]
 binding = "FWD_DB"
 database_name = "fwd"

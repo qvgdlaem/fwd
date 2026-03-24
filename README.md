@@ -193,16 +193,23 @@ go.yourdomain.com/_/          →  Worker  →  dashboard
 
 ### Behind a reverse proxy (namespace routing)
 
-If you have an existing Cloudflare Worker acting as a reverse proxy, reserve a namespace (e.g. `/fwd/*`) and forward those requests to the `fwd` Worker:
+If you have an existing Cloudflare Worker acting as a reverse proxy, reserve a namespace (e.g. `/fwd/*`) and forward the full request — **without stripping the prefix**. `fwd` handles that itself via the `PREFIX` variable.
 
+In your router Worker:
 ```ts
-// In your router Worker
 if (url.pathname.startsWith("/fwd/")) {
-  const forwardUrl = new URL(request.url);
-  forwardUrl.pathname = url.pathname.replace("/fwd", "");
-  return fetch(new Request(forwardUrl, request));
+  return env.FWD.fetch(request); // full path forwarded as-is
 }
 ```
+
+In `fwd`'s `wrangler.toml`, set the matching prefix(es):
+```toml
+[vars]
+PREFIXES = "/fwd"          # single namespace
+# PREFIXES = "/fwd,/win,/go"  # or multiple, comma-separated
+```
+
+`fwd` strips the matching prefix before resolving the slug. The dashboard is available at `/<prefix>/_/` (e.g. `/fwd/_/`).
 
 ---
 

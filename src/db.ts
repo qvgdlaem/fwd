@@ -24,6 +24,7 @@ export interface RateLimit {
 export interface Env {
   FWD_DB: D1Database;
   LOGIN_RATE_LIMITER: RateLimit;
+  PREFIXES: string; // comma-separated list, e.g. "/fwd,/win,/go". Leave empty for standalone subdomain.
 }
 
 // Redirects
