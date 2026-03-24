@@ -1,0 +1,14 @@
+name = "fwd"
+main = "src/index.ts"
+compatibility_date = "2024-09-23"
+compatibility_flags = ["nodejs_compat"]
+
+[[d1_databases]]
+binding = "FWD_DB"
+database_name = "fwd"
+database_id = "REPLACE_WITH_YOUR_D1_DATABASE_ID"
+
+# Uncomment and set if you want to scope the Worker to a specific route
+# (e.g. when deployed behind a reverse proxy at /fwd/*)
+# [triggers]
+# routes = ["yourdomain.com/fwd/*"]
