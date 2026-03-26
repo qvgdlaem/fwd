@@ -193,7 +193,7 @@ go.yourdomain.com/_/          →  Worker  →  dashboard
 
 ### Behind a reverse proxy (namespace routing)
 
-If you have an existing Cloudflare Worker acting as a reverse proxy, reserve one or more path namespaces and forward the full request — **without stripping the prefix**. `fwd` handles that itself.
+If you have an existing Cloudflare Worker acting as a reverse proxy, reserve one or more path namespaces and forward the full request — **without stripping the prefix**. `fwd` handles that itself. (We've [open-sourced a Cloudflare worker reverse proxy](https://github.com/qvgdlaem/cf-reverse-proxy) if that's of use)
 
 The router's only job is forwarding. `fwd` is responsible for understanding which namespaces it owns.
 
