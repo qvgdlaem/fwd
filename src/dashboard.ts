@@ -463,12 +463,12 @@ function styles(): string {
     input:focus { outline: none; border-color: var(--brand-main); box-shadow: 0 0 0 3px var(--brand-soft); }
 
     button[type="submit"] {
-      padding: 8px 16px; background: var(--brand-main); color: #000; border: none;
+      padding: 8px 16px; background: var(--brand-main); color: #fff; border: none;
       border-radius: 6px; font-size: 14px; font-weight: 500; cursor: pointer;
     }
     button[type="submit"]:hover { background: var(--brand-main-hover); }
     .btn-delete { padding: 4px 10px; background: transparent; color: #000; border: 1px solid #dc3545; border-radius: 5px; font-size: 12px; cursor: pointer; white-space: nowrap; }
-    .btn-delete:hover { background: #dc3545; color: #000; }
+    .btn-delete:hover { background: #dc3545; color: #fff; }
     .btn-logout { padding: 6px 12px; background: transparent; color: #000; border: 1px solid var(--brand-main); border-radius: 5px; font-size: 13px; cursor: pointer; }
     .btn-logout:hover { background: var(--brand-soft); }
 
