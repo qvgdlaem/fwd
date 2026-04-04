@@ -252,7 +252,7 @@ function renderDashboard(
         <td>
           <form method="POST" action="/_/delete" onsubmit="return confirm('Delete /${escapeHtml(r.slug)}?')">
             <input type="hidden" name="slug" value="${escapeHtml(r.slug)}">
-            <button type="submit" class="btn-delete">Delete</button>
+            <button type="submit" class="btn-delete" aria-label="Delete redirect ${escapeHtml(r.slug)}">Delete</button>
           </form>
         </td>
       </tr>`
@@ -272,12 +272,12 @@ function renderDashboard(
           <form method="POST" action="/_/users/update-auth" class="inline-form">
             <input type="hidden" name="username" value="${escapeHtml(u.username)}">
             <div class="inline-field">
-              <label>Authorized senders <span class="muted">(comma-separated emails)</span></label>
-              <input type="text" name="authorized_senders" value="${escapeHtml(u.authorized_senders)}" placeholder="you@example.com,colleague@example.com">
+              <label for="authorized-senders-${escapeHtml(u.username)}">Authorized senders <span class="muted">(comma-separated emails)</span></label>
+              <input id="authorized-senders-${escapeHtml(u.username)}" type="text" name="authorized_senders" value="${escapeHtml(u.authorized_senders)}" placeholder="you@example.com,colleague@example.com" aria-label="Authorized sender email addresses">
             </div>
             <div class="inline-field">
-              <label>Email secret <span class="muted">(min 8 chars)</span></label>
-              <input type="text" name="email_secret" value="${escapeHtml(u.email_secret)}" placeholder="min 8 characters">
+              <label for="email-secret-${escapeHtml(u.username)}">Email secret <span class="muted">(min 8 chars)</span></label>
+              <input id="email-secret-${escapeHtml(u.username)}" type="text" name="email_secret" value="${escapeHtml(u.email_secret)}" placeholder="min 8 characters" aria-label="Email secret">
             </div>
             <button type="submit">Save</button>
           </form>
@@ -289,8 +289,8 @@ function renderDashboard(
           <form method="POST" action="/_/users/update-password" class="inline-form">
             <input type="hidden" name="username" value="${escapeHtml(u.username)}">
             <div class="inline-field">
-              <label>New password <span class="muted">(min 8 chars)</span></label>
-              <input type="password" name="password" placeholder="new password" required minlength="8">
+              <label for="new-password-${escapeHtml(u.username)}">New password <span class="muted">(min 8 chars)</span></label>
+              <input id="new-password-${escapeHtml(u.username)}" type="password" name="password" placeholder="new password" required minlength="8" aria-label="New password">
             </div>
             <button type="submit">Update</button>
           </form>
@@ -301,7 +301,7 @@ function renderDashboard(
           ? '<span class="muted">—</span>'
           : `<form method="POST" action="/_/users/delete" onsubmit="return confirm('Delete user ${escapeHtml(u.username)}?')">
               <input type="hidden" name="username" value="${escapeHtml(u.username)}">
-              <button type="submit" class="btn-delete">Delete</button>
+              <button type="submit" class="btn-delete" aria-label="Delete user ${escapeHtml(u.username)}">Delete</button>
             </form>`
         }
       </td>
@@ -352,8 +352,7 @@ function renderDashboard(
             <input id="label" name="label" type="text" placeholder="Q1 Survey">
           </div>
           <div class="field submit-field">
-            <label>&nbsp;</label>
-            <button type="submit">Add</button>
+            <button type="submit" aria-label="Add redirect">Add</button>
           </div>
         </div>
       </form>
@@ -365,11 +364,11 @@ function renderDashboard(
         <table>
           <thead>
             <tr>
-              <th>Slug</th>
-              <th>Label</th>
-              <th>Destination</th>
-              <th>Created</th>
-              <th></th>
+              <th scope="col">Slug</th>
+              <th scope="col">Label</th>
+              <th scope="col">Destination</th>
+              <th scope="col">Created</th>
+              <th scope="col">Actions</th>
             </tr>
           </thead>
           <tbody>${rows}</tbody>
@@ -383,10 +382,10 @@ function renderDashboard(
         <table>
           <thead>
             <tr>
-              <th>Username</th>
-              <th>Email auth</th>
-              <th>Password</th>
-              <th></th>
+              <th scope="col">Username</th>
+              <th scope="col">Email auth</th>
+              <th scope="col">Password</th>
+              <th scope="col">Actions</th>
             </tr>
           </thead>
           <tbody>${userRows}</tbody>
@@ -406,8 +405,7 @@ function renderDashboard(
               <input id="new-password" name="password" type="password" placeholder="password" required minlength="8">
             </div>
             <div class="field submit-field">
-              <label>&nbsp;</label>
-              <button type="submit">Add user</button>
+              <button type="submit" aria-label="Add user">Add user</button>
             </div>
           </div>
         </form>
@@ -426,8 +424,8 @@ function styles(): string {
       --brand-main: #833ab4;
       --brand-main-hover: #6f2f9c;
       --brand-soft: rgba(131, 58, 180, 0.14);
-      --text-main: #212529;
-      --text-muted: #6c757d;
+      --text-main: #000;
+      --text-muted: #000;
       --surface: #fff;
       --surface-soft: #f8f9fa;
       --border: #dee2e6;
@@ -435,7 +433,7 @@ function styles(): string {
     }
     *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
     body { font-family: system-ui, sans-serif; font-size: 14px; background: var(--bg); color: var(--text-main); }
-    a { color: var(--brand-main); }
+    a { color: #000; }
     code { font-family: monospace; background: #e9ecef; padding: 2px 5px; border-radius: 3px; font-size: 13px; }
 
     .container { max-width: 1100px; margin: 0 auto; padding: 32px 24px; }
@@ -443,7 +441,7 @@ function styles(): string {
 
     h1 { font-size: 22px; font-weight: 700; letter-spacing: -0.5px; }
     h2 { font-size: 15px; font-weight: 600; margin-bottom: 12px; }
-    h3 { font-size: 13px; font-weight: 600; margin-bottom: 10px; color: #495057; }
+    h3 { font-size: 13px; font-weight: 600; margin-bottom: 10px; color: #000; }
     .subtitle { color: var(--text-muted); margin-top: 4px; margin-bottom: 28px; }
     .brand { display: inline-flex; align-items: center; gap: 10px; }
     .brand-logo { width: 34px; height: auto; display: block; }
@@ -451,13 +449,13 @@ function styles(): string {
     header { display: flex; align-items: center; justify-content: space-between; margin-bottom: 28px; }
     .header-right { display: flex; align-items: center; gap: 12px; }
 
-    .error { background: #f8d7da; color: #842029; border: 1px solid #f5c2c7; border-radius: 6px; padding: 10px 14px; margin-bottom: 16px; font-size: 13px; }
+    .error { background: #f8d7da; color: #000; border: 1px solid #f5c2c7; border-radius: 6px; padding: 10px 14px; margin-bottom: 16px; font-size: 13px; }
     .muted { color: var(--text-muted); font-size: 13px; }
     .center { text-align: center; }
     .count { font-weight: 400; color: var(--text-muted); }
     .badge { font-size: 11px; background: #e9ecef; color: var(--text-muted); border-radius: 4px; padding: 1px 6px; vertical-align: middle; }
 
-    label { display: block; font-size: 12px; font-weight: 500; color: #495057; margin-bottom: 4px; }
+    label { display: block; font-size: 12px; font-weight: 500; color: #000; margin-bottom: 4px; }
     input[type="text"], input[type="url"], input[type="password"] {
       display: block; width: 100%; padding: 8px 10px; border: 1px solid var(--border-strong);
       border-radius: 6px; font-size: 14px; background: var(--surface);
@@ -465,13 +463,13 @@ function styles(): string {
     input:focus { outline: none; border-color: var(--brand-main); box-shadow: 0 0 0 3px var(--brand-soft); }
 
     button[type="submit"] {
-      padding: 8px 16px; background: var(--brand-main); color: #fff; border: none;
+      padding: 8px 16px; background: var(--brand-main); color: #000; border: none;
       border-radius: 6px; font-size: 14px; font-weight: 500; cursor: pointer;
     }
     button[type="submit"]:hover { background: var(--brand-main-hover); }
-    .btn-delete { padding: 4px 10px; background: transparent; color: #dc3545; border: 1px solid #dc3545; border-radius: 5px; font-size: 12px; cursor: pointer; white-space: nowrap; }
-    .btn-delete:hover { background: #dc3545; color: #fff; }
-    .btn-logout { padding: 6px 12px; background: transparent; color: var(--brand-main); border: 1px solid var(--brand-main); border-radius: 5px; font-size: 13px; cursor: pointer; }
+    .btn-delete { padding: 4px 10px; background: transparent; color: #000; border: 1px solid #dc3545; border-radius: 5px; font-size: 12px; cursor: pointer; white-space: nowrap; }
+    .btn-delete:hover { background: #dc3545; color: #000; }
+    .btn-logout { padding: 6px 12px; background: transparent; color: #000; border: 1px solid var(--brand-main); border-radius: 5px; font-size: 13px; cursor: pointer; }
     .btn-logout:hover { background: var(--brand-soft); }
 
     .add-form { background: var(--surface); border: 1px solid var(--border); border-radius: 8px; padding: 20px; margin-bottom: 28px; }
@@ -491,7 +489,7 @@ function styles(): string {
     .users-section { margin-top: 36px; }
     .add-user-form { margin-top: 16px; background: var(--surface); border: 1px solid var(--border); border-radius: 8px; padding: 16px 20px; }
 
-    details summary { cursor: pointer; font-size: 12px; color: var(--brand-main); list-style: none; user-select: none; }
+    details summary { cursor: pointer; font-size: 12px; color: #000; list-style: none; user-select: none; }
     details summary::-webkit-details-marker { display: none; }
     details summary::before { content: "+ "; }
     details[open] summary::before { content: "− "; }
@@ -499,9 +497,11 @@ function styles(): string {
     .inline-form button[type="submit"] { align-self: flex-start; padding: 6px 14px; font-size: 13px; }
     .inline-field { display: flex; flex-direction: column; gap: 4px; }
     .inline-field input { max-width: 360px; }
+    ::placeholder { color: #000; opacity: 1; }
 
     .container.narrow form { display: flex; flex-direction: column; gap: 14px; }
     .container.narrow button[type="submit"] { margin-top: 4px; }
+    .submit-field { padding-top: 22px; }
   </style>`;
 }
 
