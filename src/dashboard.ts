@@ -208,12 +208,17 @@ function renderLogin(error?: string): Response {
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="robots" content="noindex, nofollow">
+  <link rel="icon" href="/favicon.png" type="image/png">
   <title>fwd — Login</title>
   ${styles()}
 </head>
 <body>
   <div class="container narrow">
-    <h1>fwd</h1>
+    <h1 class="brand">
+      <img src="/logo.svg" alt="Forward logo" class="brand-logo">
+      <span>fwd</span>
+    </h1>
     <p class="subtitle">URL Redirector</p>
     ${error ? `<div class="error">${escapeHtml(error)}</div>` : ""}
     <form method="POST" action="/_/login">
@@ -309,13 +314,17 @@ function renderDashboard(
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <link rel="icon" href="/favicon.png" type="image/png">
   <title>fwd — Dashboard</title>
   ${styles()}
 </head>
 <body>
   <div class="container">
     <header>
-      <h1>fwd</h1>
+      <h1 class="brand">
+        <img src="/logo.svg" alt="Forward logo" class="brand-logo">
+        <span>fwd</span>
+      </h1>
       <div class="header-right">
         <span class="muted">${escapeHtml(username)}</span>
         <form method="POST" action="/_/logout" style="display:inline">
@@ -412,9 +421,21 @@ function renderDashboard(
 
 function styles(): string {
   return `<style>
+    :root {
+      --bg: #F1EFE9;
+      --brand-main: #833ab4;
+      --brand-main-hover: #6f2f9c;
+      --brand-soft: rgba(131, 58, 180, 0.14);
+      --text-main: #212529;
+      --text-muted: #6c757d;
+      --surface: #fff;
+      --surface-soft: #f8f9fa;
+      --border: #dee2e6;
+      --border-strong: #ced4da;
+    }
     *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
-    body { font-family: system-ui, sans-serif; font-size: 14px; background: #f8f9fa; color: #212529; }
-    a { color: #0d6efd; }
+    body { font-family: system-ui, sans-serif; font-size: 14px; background: var(--bg); color: var(--text-main); }
+    a { color: var(--brand-main); }
     code { font-family: monospace; background: #e9ecef; padding: 2px 5px; border-radius: 3px; font-size: 13px; }
 
     .container { max-width: 1100px; margin: 0 auto; padding: 32px 24px; }
@@ -423,56 +444,58 @@ function styles(): string {
     h1 { font-size: 22px; font-weight: 700; letter-spacing: -0.5px; }
     h2 { font-size: 15px; font-weight: 600; margin-bottom: 12px; }
     h3 { font-size: 13px; font-weight: 600; margin-bottom: 10px; color: #495057; }
-    .subtitle { color: #6c757d; margin-top: 4px; margin-bottom: 28px; }
+    .subtitle { color: var(--text-muted); margin-top: 4px; margin-bottom: 28px; }
+    .brand { display: inline-flex; align-items: center; gap: 10px; }
+    .brand-logo { width: 34px; height: auto; display: block; }
 
     header { display: flex; align-items: center; justify-content: space-between; margin-bottom: 28px; }
     .header-right { display: flex; align-items: center; gap: 12px; }
 
     .error { background: #f8d7da; color: #842029; border: 1px solid #f5c2c7; border-radius: 6px; padding: 10px 14px; margin-bottom: 16px; font-size: 13px; }
-    .muted { color: #6c757d; font-size: 13px; }
+    .muted { color: var(--text-muted); font-size: 13px; }
     .center { text-align: center; }
-    .count { font-weight: 400; color: #6c757d; }
-    .badge { font-size: 11px; background: #e9ecef; color: #6c757d; border-radius: 4px; padding: 1px 6px; vertical-align: middle; }
+    .count { font-weight: 400; color: var(--text-muted); }
+    .badge { font-size: 11px; background: #e9ecef; color: var(--text-muted); border-radius: 4px; padding: 1px 6px; vertical-align: middle; }
 
     label { display: block; font-size: 12px; font-weight: 500; color: #495057; margin-bottom: 4px; }
     input[type="text"], input[type="url"], input[type="password"] {
-      display: block; width: 100%; padding: 8px 10px; border: 1px solid #ced4da;
-      border-radius: 6px; font-size: 14px; background: #fff;
+      display: block; width: 100%; padding: 8px 10px; border: 1px solid var(--border-strong);
+      border-radius: 6px; font-size: 14px; background: var(--surface);
     }
-    input:focus { outline: none; border-color: #86b7fe; box-shadow: 0 0 0 3px rgba(13,110,253,.15); }
+    input:focus { outline: none; border-color: var(--brand-main); box-shadow: 0 0 0 3px var(--brand-soft); }
 
     button[type="submit"] {
-      padding: 8px 16px; background: #0d6efd; color: #fff; border: none;
+      padding: 8px 16px; background: var(--brand-main); color: #fff; border: none;
       border-radius: 6px; font-size: 14px; font-weight: 500; cursor: pointer;
     }
-    button[type="submit"]:hover { background: #0b5ed7; }
+    button[type="submit"]:hover { background: var(--brand-main-hover); }
     .btn-delete { padding: 4px 10px; background: transparent; color: #dc3545; border: 1px solid #dc3545; border-radius: 5px; font-size: 12px; cursor: pointer; white-space: nowrap; }
     .btn-delete:hover { background: #dc3545; color: #fff; }
-    .btn-logout { padding: 6px 12px; background: transparent; color: #6c757d; border: 1px solid #dee2e6; border-radius: 5px; font-size: 13px; cursor: pointer; }
-    .btn-logout:hover { background: #e9ecef; }
+    .btn-logout { padding: 6px 12px; background: transparent; color: var(--brand-main); border: 1px solid var(--brand-main); border-radius: 5px; font-size: 13px; cursor: pointer; }
+    .btn-logout:hover { background: var(--brand-soft); }
 
-    .add-form { background: #fff; border: 1px solid #dee2e6; border-radius: 8px; padding: 20px; margin-bottom: 28px; }
+    .add-form { background: var(--surface); border: 1px solid var(--border); border-radius: 8px; padding: 20px; margin-bottom: 28px; }
     .form-row { display: flex; gap: 12px; align-items: flex-end; flex-wrap: wrap; }
     .field { display: flex; flex-direction: column; min-width: 140px; }
     .field.grow { flex: 1; }
     .submit-field { justify-content: flex-end; }
 
     .table-wrap { overflow-x: auto; }
-    table { width: 100%; border-collapse: collapse; background: #fff; border: 1px solid #dee2e6; border-radius: 8px; overflow: hidden; }
-    th { text-align: left; padding: 10px 14px; font-size: 12px; font-weight: 600; text-transform: uppercase; letter-spacing: 0.5px; color: #6c757d; background: #f8f9fa; border-bottom: 1px solid #dee2e6; }
+    table { width: 100%; border-collapse: collapse; background: var(--surface); border: 1px solid var(--border); border-radius: 8px; overflow: hidden; }
+    th { text-align: left; padding: 10px 14px; font-size: 12px; font-weight: 600; text-transform: uppercase; letter-spacing: 0.5px; color: var(--text-muted); background: var(--surface-soft); border-bottom: 1px solid var(--border); }
     td { padding: 10px 14px; border-bottom: 1px solid #f1f3f5; vertical-align: top; }
     tr:last-child td { border-bottom: none; }
-    tr:hover td { background: #f8f9fa; }
+    tr:hover td { background: var(--surface-soft); }
     .url-cell { max-width: 320px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 
     .users-section { margin-top: 36px; }
-    .add-user-form { margin-top: 16px; background: #fff; border: 1px solid #dee2e6; border-radius: 8px; padding: 16px 20px; }
+    .add-user-form { margin-top: 16px; background: var(--surface); border: 1px solid var(--border); border-radius: 8px; padding: 16px 20px; }
 
-    details summary { cursor: pointer; font-size: 12px; color: #0d6efd; list-style: none; user-select: none; }
+    details summary { cursor: pointer; font-size: 12px; color: var(--brand-main); list-style: none; user-select: none; }
     details summary::-webkit-details-marker { display: none; }
     details summary::before { content: "+ "; }
     details[open] summary::before { content: "− "; }
-    .inline-form { margin-top: 10px; display: flex; flex-direction: column; gap: 8px; padding: 12px; background: #f8f9fa; border-radius: 6px; border: 1px solid #e9ecef; }
+    .inline-form { margin-top: 10px; display: flex; flex-direction: column; gap: 8px; padding: 12px; background: var(--surface-soft); border-radius: 6px; border: 1px solid #e9ecef; }
     .inline-form button[type="submit"] { align-self: flex-start; padding: 6px 14px; font-size: 13px; }
     .inline-field { display: flex; flex-direction: column; gap: 4px; }
     .inline-field input { max-width: 360px; }
